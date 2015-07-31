@@ -1,0 +1,53 @@
+---
+- hosts: web
+  sudo: yes
+  gather_facts: no
+  vars:
+    install_user: vagrant
+  vars_prompt:
+    project_name: "Enter project name"
+    server_name: "Enter server name"
+    server_admin: "Enter server admin"
+  tasks:
+    - name: Install Composer.
+      shell: curl -sS https://getcomposer.org/installer | php; mv composer.phar /usr/local/bin/composer
+      always_run: yes
+
+    - name: mkdir project directory
+      file: path=/home/{{install_user}}/{{project_name}} state=directory owner={{install_user}} group={{install_user}} mode=0775
+
+    - name: mkdir project log directory
+      tags: mkdirLog
+      file: path=/var/log/httpd_{{project_name}} state=directory owner={{install_user}} group={{install_user}} mode=0775
+
+    - name: Install Symfony2
+      sudo: no
+      shell: yes | composer create-project symfony/framework-standard-edition /home/{{install_user}}/{{project_name}}/
+      always_run: yes
+
+    - name: Change Permission cache logs directory
+      sudo: no
+      tags: setfacl
+      shell: setfacl -R -m u:apache:rwX -m u:`whoami`:rwX /home/{{install_user}}/{{project_name}}/app/cache /home/{{install_user}}/{{project_name}}/app/logs ;
+             setfacl -dR -m u:apache:rwX -m u:`whoami`:rwX /home/{{install_user}}/{{project_name}}/app/cache /home/{{install_user}}/{{project_name}}/app/logs
+      always_run: yes
+
+    - name: Create PostgreSQL User
+      tags: db
+      postgresql_user: name=vagrant
+                       password=vagrant
+                       role_attr_flags=CREATEDB,NOSUPERUSER
+
+    - name: Create DB PostgreSQL
+      tags: db
+      postgresql_db: db={{project_name}}
+          #owner=vagrant
+
+    - name: Add Virtualhost
+      tags: virtualhost
+      template: src=virtualhost_tmpl.js dest=/etc/httpd/conf.d/{{project_name}}.conf
+      notify: restart apache
+
+  handlers:
+    - name: restart apache
+      service: name=httpd state=restarted
