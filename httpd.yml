@@ -1,0 +1,10 @@
+---
+- hosts: web
+  sudo: yes
+  gather_facts: no
+  tasks:
+    - name: Install httpd
+      yum: name=httpd state=latest
+
+    - name: httpd start
+      service: name=httpd state=started enabled=yes
