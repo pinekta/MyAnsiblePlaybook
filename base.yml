@@ -1,0 +1,16 @@
+---
+- hosts: all 
+  sudo: yes
+  gather_facts: no
+  tasks:
+    - name: Install basic soft
+      yum: name={{ item }} state=installed
+      with_items:
+        - wget
+        - ntp
+        - vim
+        - git
+        - tmux
+
+    - name: yum update
+      yum: name=* state=latest

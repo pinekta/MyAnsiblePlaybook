@@ -1,0 +1,20 @@
+---
+- hosts: all 
+  sudo: yes
+  gather_facts: no
+  tasks:
+    - name: Add repository.
+      yum: name={{item}} state=installed
+      with_items:
+        - http://ftp-srv2.kddilabs.jp/Linux/distributions/fedora/epel/6/x86_64/epel-release-6-8.noarch.rpm
+        - http://rpms.famillecollet.com/enterprise/remi-release-6.rpm 
+        - http://pkgs.repoforge.org/rpmforge-release/rpmforge-release-0.5.3-1.el6.rf.x86_64.rpm
+        - http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-centos94-9.4-1.noarch.rpm
+
+    - name: change repo config.
+      replace: dest=/etc/yum.repos.d/{{item}} regexp="enabled *= *1" replace="enabled=0"
+      with_items:
+        - epel.repo
+        - rpmforge.repo
+        - remi.repo
+        - pgdg-94-centos.repo
