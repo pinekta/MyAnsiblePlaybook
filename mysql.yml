@@ -1,0 +1,41 @@
+---
+- hosts: all 
+  sudo: yes
+  gather_facts: no
+  vars:
+    db_user: vagrant
+  vars_prompt:
+    db_name: vagrant
+    db_user_password: vagrant
+  tasks:
+    - name: Remove Old MySQL Library.
+      yum: name=mysql* state=absent
+
+    - name: Add MySQL Rpm.
+      yum: name=http://dev.mysql.com/get/mysql-community-release-el6-5.noarch.rpm state=present
+
+    - name: Install MySQL Client.
+      yum: name=mysql-community-client state=latest
+
+- hosts: web    # DBサーバが別にある場合はホストを変更すること
+  sudo: yes
+  gather_facts: no
+  tasks:
+    - name: Install MySQL Server.
+      yum: name=mysql-community-server state=latest
+
+    # TODO 
+    - name: Secure Installation.
+      shell: yes n | head -n 1 ; yes y | head -n 4 | mysql_secure_installation
+      always_run: yes
+
+    - name: Create User.
+      mysql_user: name={{db_user}} password={{db_user_password}} state=present
+
+    - name: Create DB.
+      mysql_user: name={{db_name}} state=present
+
+    - name: Start MySQL
+      tags: setting
+      service: name=mysqld state=started enabled=yes
+
