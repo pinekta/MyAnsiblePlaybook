@@ -1,0 +1,24 @@
+---
+- hosts: web 
+  sudo: yes
+  gather_facts: no
+  vars:
+    user: homepage
+    password: homepage
+    shell: /bin/bash
+  tasks:
+    - name: Add Group.
+      group: name="{{user}}" state=present
+
+    - name: Make salt.
+      shell: mktemp -d -u | awk '{ print substr($1, length($1)-8+1)}'
+      always_run: yes
+      register: salt
+
+    - name: Make hashed word.
+      command: python -c 'import crypt; print crypt.crypt("{{password}}", "{{salt.stdout}}");'
+      always_run: yes
+      register: hashedWord
+
+    - name: Add User.
+      user: name={{user}} group={{user}} shell={{shell}} password={{hashedWord.stdout}}
