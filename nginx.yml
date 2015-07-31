@@ -1,0 +1,11 @@
+---
+- hosts: web
+  sudo: yes
+  gather_facts: no
+  tasks:
+    - name: Install nginx
+      yum: name=nginx state=latest
+
+    - name: nginx start
+      service: name=nginx state=running enabled=yes
+- 
