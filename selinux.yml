@@ -1,0 +1,16 @@
+---
+- hosts: all
+  user: vagrant    # TODO: use vars file
+  sudo: yes
+  gather_facts: no
+  tasks:
+    - name: SELinux Disable
+      command: setenforce 0
+      always_run: yes
+      ignore_errors: True
+
+    - name: Edit SELinux config
+      lineinfile:
+        dest=/etc/selinux/config
+        regexp=^SELINUX=
+        line=SELINUX=disabled
