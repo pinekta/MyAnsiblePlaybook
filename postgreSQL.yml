@@ -1,0 +1,57 @@
+---
+- hosts: all 
+  sudo: yes
+  gather_facts: no
+  tasks:
+    - name: Install postgreSQL Client.
+      yum: name={{ item }} state=installed enablerepo=pgdg94
+      with_items:
+        - postgresql94
+        - postgresql94-devel
+        - postgresql94-libs
+        - postgresql94-odbc
+
+- hosts: web    # DBサーバが別にある場合はホストを変更すること
+  sudo: yes
+  gather_facts: no
+  tasks:
+    - name: Install postgreSQL Server.
+      tags: serverInstall
+      yum: name={{ item }} state=installed enablerepo=pgdg94
+      with_items:
+        - postgresql94-server
+
+    - name: Install psycopg2.
+      tags: psycopg2
+      yum: name=python-psycopg2 state=installed
+
+    - name: Init postgreSQL.
+      tags: serverInstall
+      shell: service postgresql-9.4 initdb
+
+    - name: Replace postgresql.conf
+      tags: setting
+      lineinfile: dest=/var/lib/pgsql/9.4/data/postgresql.conf
+                  state=present
+                  regexp="^#listen_addresses ="
+                  line="listen_addresses = '*'"
+
+    - name: Replace pg_hba.conf 1
+      tags: setting
+      lineinfile: dest=/var/lib/pgsql/9.4/data/pg_hba.conf
+                  state=present
+                  backrefs=yes
+                  regexp="local   all             all                                     peer"
+                    line="local   all             all                                     trust"
+
+    - name: Replace pg_hba.conf 2
+      tags: setting
+      lineinfile: dest=/var/lib/pgsql/9.4/data/pg_hba.conf
+                  state=present
+                  backrefs=yes
+                  regexp="host    all             all             127.0.0.1/32            ident"
+                    line="host    all             all             127.0.0.1/32            trust"
+
+    - name: Start PostgreSQL
+      tags: setting
+      service: name=postgresql-9.4 state=started enabled=yes
