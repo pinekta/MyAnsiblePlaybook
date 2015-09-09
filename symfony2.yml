@@ -45,7 +45,7 @@
 
     - name: Add Virtualhost
       tags: virtualhost
-      template: src=virtualhost_tmpl.js dest=/etc/httpd/conf.d/{{project_name}}.conf
+      template: src=virtualhost_tmpl.j2 dest=/etc/httpd/conf.d/{{project_name}}.conf
       notify: restart apache
 
   handlers:
